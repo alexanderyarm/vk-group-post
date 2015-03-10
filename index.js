@@ -1,4 +1,3 @@
-// var async = require('async');
 var Promise = require('promise');
 var request = require('request');
 var fs = require('fs')
