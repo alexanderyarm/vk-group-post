@@ -4,7 +4,7 @@ var fs = require('fs')
 
 var config = {}
 
-var log = false;
+var log = true;
 
 var doRequest = function(method, params) {
 	var url = method.indexOf('http') == -1 ? 'https://api.vk.com/method/' + method : method;
@@ -52,17 +52,30 @@ var photos =  {
 			})
 			.then(function(albumsArray) {
 				selectedAlbum = albumsArray.response.filter(function(album) {
-					if (album.title == albumTitle)
+					if (album.title === albumTitle)
 						return album;
 				});
 
 				return new Promise(function(resolve, reject) {
-					if (selectedAlbum.length == 0)
-						reject('Альбом с таким именем не найден')
+					if (selectedAlbum.length === 0) {
+						photos.createAlbum(albumTitle).then(function(album) {
+							resolve(album.response);
+						});
+						
+						return;
+					}
 
 					resolve(selectedAlbum[0]);
 				});
 			});
+	},
+
+	createAlbum: function(title) {
+		return doRequest('photos.createAlbum', {
+			title: title,
+			privacy: 0,
+			gid: config.groupID
+		});
 	},
 
 	getUploadServer: function(albumID) {
