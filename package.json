@@ -1,0 +1,13 @@
+{
+  "name": "vk_import",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "form-data": "^0.2.0",
+    "promise": "^6.1.0",
+    "request": "^2.53.0"
+  }
+}
