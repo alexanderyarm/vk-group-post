@@ -14,17 +14,25 @@ function doRequest(method, params) {
         params.access_token = config.token;
 
         request.post({url: url, formData: params}, function (err, httpResponse, body) {
-            if (err) reject(err);
-            if (!body) reject('Something went wrong');
-        
-            var response = JSON.parse(body);
+            if (!body) {
+                throw new Error('Something went wrong');
+            }
 
+            var response = JSON.parse(body);
+                
+            if (err || response.error) {
+
+                var errorMsg = err || (response.error && response.error.error_msg);
+                throw new Error(errorMsg);
+            }
+
+            
             if (config.log) {
                 console.log('------------------------------------');
                 console.log('\n')
                 console.log('Requesting: ' + url);
                 console.log('Response:');
-                console.log(response.response)
+                console.log(response)
                 console.log('\n')
                 console.log('------------------------------------');
                 console.log('\n\n\n')
@@ -35,7 +43,6 @@ function doRequest(method, params) {
 };
 
 function checkConfig() {
-    config = config || {};
     return (config.token && config.groupID);
 };
 
