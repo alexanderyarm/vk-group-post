@@ -23,7 +23,10 @@ function doRequest(method, params) {
             if (err || response.error) {
 
                 var errorMsg = err || (response.error && response.error.error_msg);
-                throw new Error(errorMsg);
+
+                reject(response.error);
+
+                return;
             }
 
             
@@ -48,9 +51,7 @@ function checkConfig() {
 
 function uploadToAlbum(albumTitle, photo) {
     return photos.getAlbumByName(albumTitle)
-        .then(function(album) {
-            return photos.getUploadServer(album.aid);
-        })
+        .then(photos.getUploadServer)
         .then(function(server) {
             var options = photos.getUploadObject(photo.src);
 
@@ -86,23 +87,28 @@ var photos =  {
         })
         .then(function(albumsArray) {
             selectedAlbum = albumsArray.response.filter(function(album) {
-                if (album.title === albumTitle)
+                if (album.title === albumTitle) {
                     return album;
+                }
             });
 
             return new Promise(function(resolve, reject) {
                 if (selectedAlbum.length === 0) {
                     photos.createAlbum(albumTitle).then(function(album) {
                         resolve(album.response);
-                    });
-
-                    return;
+                    })
+                    .catch(function(e) {
+                        reject(e)
+                    })
+                }
+                else {
+                    resolve(selectedAlbum[0]);
                 }
 
-                resolve(selectedAlbum[0]);
-            });
-        });
+            })
+        })
     },
+
 
     createAlbum: function(title) {
         return doRequest('photos.createAlbum', {
@@ -114,7 +120,7 @@ var photos =  {
 
     getUploadServer: function(albumID) {
         return doRequest('photos.getUploadServer', {
-            album_id: albumID,
+            album_id: albumID.aid,
             group_id: config.groupID
         })
     },
@@ -166,9 +172,13 @@ var methods = {
         return Promise
             .all(promiseStack)
             .then(function(photos) {
-                var attachments = photos.map(function(photo) {
-                    return 'photo' + photo.response[0].owner_id.toString() + '_' + photo.response[0].pid
-                });
+                var attachments = [];
+
+                if (photos.toString() !== '') {
+                    attachments = photos.map(function(photo) {
+                        return 'photo' + photo.response[0].owner_id.toString() + '_' + photo.response[0].pid
+                    });
+                }
 
                 return wall.post(post, attachments.join(','))
             })
