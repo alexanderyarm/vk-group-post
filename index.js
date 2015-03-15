@@ -56,7 +56,7 @@ function uploadToAlbum(albumTitle, photo) {
         .then(function(server) {
             var options = photos.getUploadObject(photo.src);
 
-            return doRequest(server.response.upload_url, options)
+            return doRequest(server.response.upload_url, options);
         })
         .then(function(response) {
             return photos.save(response, photo);
@@ -82,7 +82,7 @@ var wall = {
             params.attachments = attachments;
         }
 
-        return doRequest('wall.post', params)
+        return doRequest('wall.post', params);
     }
 };
 
@@ -102,7 +102,7 @@ var photos =  {
                             resolve(album.response);
                         })
                         .catch(function(e) {
-                            reject(e)
+                            reject(e);
                         })
                     }
                     else {
@@ -114,10 +114,9 @@ var photos =  {
 
     getAlbums: function() {
         return doRequest('photos.getAlbums', {
-            owner_id: -config.groupID,
+            owner_id: -config.groupID
         });
     },
-
 
     createAlbum: function(title) {
         return doRequest('photos.createAlbum', {
@@ -155,7 +154,7 @@ var photos =  {
             photos_list: response.photos_list,
             hash: response.hash,
             caption: photo.desc
-        })
+        });
     }
 
 };
@@ -187,8 +186,8 @@ var methods = {
         photos.list = photos.list || [];
 
         photos.list.forEach(function(photo) {
-            promiseStack.push(uploadToAlbum(photos.album, photo))
-        })
+            promiseStack.push(uploadToAlbum(photos.album, photo));
+        });
 
         return Promise
             .all(promiseStack)
@@ -197,11 +196,11 @@ var methods = {
 
                 if (photos.toString() !== '') {
                     attachments = photos.map(function(photo) {
-                        return 'photo' + photo.response[0].owner_id.toString() + '_' + photo.response[0].pid
+                        return 'photo' + photo.response[0].owner_id.toString() + '_' + photo.response[0].pid;
                     });
                 }
 
-                return wall.post(post, attachments.join(','))
+                return wall.post(post, attachments.join(','));
             })
     }
 }
