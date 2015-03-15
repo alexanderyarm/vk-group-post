@@ -15,13 +15,14 @@ function doRequest(method, params) {
 
         request.post({url: url, formData: params}, function (err, httpResponse, body) {
             if (!body) {
-                throw new Error('Something went wrong');
+                reject('Something went wrong');
+
+                return;
             }
 
             var response = JSON.parse(body);
                 
             if (err || response.error) {
-
                 var errorMsg = err || (response.error && response.error.error_msg);
 
                 reject(response.error);
@@ -58,14 +59,7 @@ function uploadToAlbum(albumTitle, photo) {
             return doRequest(server.response.upload_url, options)
         })
         .then(function(response) {
-            return doRequest('photos.save', {
-                album_id: response.aid,
-                group_id: config.groupID,
-                server: response.server,
-                photos_list: response.photos_list,
-                hash: response.hash,
-                caption: photo.desc
-            })
+            return photos.save(response, photo);
         })
 }
 
@@ -82,31 +76,34 @@ var wall = {
 
 var photos =  {
     getAlbumByName: function(albumTitle) {
+        return photos.getAlbums()
+            .then(function(albumsArray) {
+                selectedAlbum = albumsArray.response.filter(function(album) {
+                    if (album.title === albumTitle) {
+                        return album;
+                    }
+                });
+
+                return new Promise(function(resolve, reject) {
+                    if (selectedAlbum.length === 0) {
+                        photos.createAlbum(albumTitle).then(function(album) {
+                            resolve(album.response);
+                        })
+                        .catch(function(e) {
+                            reject(e)
+                        })
+                    }
+                    else {
+                        resolve(selectedAlbum[0]);
+                    }
+                })
+            })
+    },
+
+    getAlbums: function() {
         return doRequest('photos.getAlbums', {
             owner_id: -config.groupID,
-        })
-        .then(function(albumsArray) {
-            selectedAlbum = albumsArray.response.filter(function(album) {
-                if (album.title === albumTitle) {
-                    return album;
-                }
-            });
-
-            return new Promise(function(resolve, reject) {
-                if (selectedAlbum.length === 0) {
-                    photos.createAlbum(albumTitle).then(function(album) {
-                        resolve(album.response);
-                    })
-                    .catch(function(e) {
-                        reject(e)
-                    })
-                }
-                else {
-                    resolve(selectedAlbum[0]);
-                }
-
-            })
-        })
+        });
     },
 
 
@@ -136,7 +133,19 @@ var photos =  {
         }
 
         return returnObj;
+    },
+    
+    save: function(response, photo) {
+        return doRequest('photos.save', {
+            album_id: response.aid,
+            group_id: config.groupID,
+            server: response.server,
+            photos_list: response.photos_list,
+            hash: response.hash,
+            caption: photo.desc
+        })
     }
+
 };
 
 
@@ -185,5 +194,5 @@ var methods = {
     }
 }
 
-
+    
 module.exports = methods;
