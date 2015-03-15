@@ -65,12 +65,24 @@ function uploadToAlbum(albumTitle, photo) {
 
 var wall = {
     post: function(message, attachments) {
-        return doRequest('wall.post', {
+        var params = {
             owner_id: -config.groupID,
-            from_group: 1,
-            message: message,
-            attachments: attachments
-        })
+            from_group: 1
+        }
+
+        if (!message && !attachments) {
+            return new Promise(function(resolve, reject) {
+                reject('ERROR: Wall post message or attachment is required');
+            });
+        }
+
+        params.message = message;
+
+        if (attachments) {
+            params.attachments = attachments;
+        }
+
+        return doRequest('wall.post', params)
     }
 };
 
