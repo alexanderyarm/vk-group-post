@@ -64,23 +64,29 @@ function uploadToAlbum(albumTitle, photo) {
 }
 
 var wall = {
-    post: function(message, attachments) {
+    post: function(data) {
         var params = {
             owner_id: -config.groupID,
             from_group: 1
         }
 
-        if (!message && !attachments) {
+        Object.keys(data.config).forEach(function(key) {
+            params[key] = data.config[key];
+        });
+
+        if (!data.message && !data.attachments) {
             return new Promise(function(resolve, reject) {
                 reject('ERROR: Wall post message or attachment is required');
             });
         }
 
-        params.message = message;
+        params.message = data.message;
 
-        if (attachments) {
-            params.attachments = attachments;
+        if (data.attachments) {
+            params.attachments = data.attachments;
         }
+
+        console.log(params);
 
         return doRequest('wall.post', params);
     }
@@ -167,10 +173,10 @@ var methods = {
         });
     },
 
-    groupPost: function(post, photos) {
+    groupPost: function(data) {
         var promiseStack = [];
 
-        if (!photos.album || photos.album === '') {
+        if (!data.attachments.photos.album || data.attachments.photos.album === '') {
             return new Promise(function(resolve, reject) {
                 reject('ERROR: Album name is required');
             });
@@ -182,11 +188,10 @@ var methods = {
             });
         }
 
-        post = post || '';
-        photos.list = photos.list || [];
+        var photos = data.attachments.photos.list || [];
 
-        photos.list.forEach(function(photo) {
-            promiseStack.push(uploadToAlbum(photos.album, photo));
+        photos.forEach(function(photo) {
+            promiseStack.push(uploadToAlbum(data.attachments.photos.album, photo));
         });
 
         return Promise
@@ -200,7 +205,11 @@ var methods = {
                     });
                 }
 
-                return wall.post(post, attachments.join(','));
+                return wall.post({
+                    message: data.message, 
+                    attachments: attachments.join(','),
+                    config: data.config
+                });
             })
     }
 }
